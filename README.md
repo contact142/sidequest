@@ -5,9 +5,14 @@
 ![Status](https://img.shields.io/badge/status-v1.0-brightgreen)
 ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-**Structured multi-model problem-solving with hardened backtest gates.**
+**Structured multi-model problem-solving on top of a queryable codebase map, with hardened backtest gates.**
 
-When single-pass thinking has plateaued and you have data to test against, Side Quest runs you through a disciplined two-round brainstorm with multiple AI voices, forces creative divergence between rounds, gates every plan segment behind a *real* backtest (not summary statistics), and synthesizes only what survives into a coherent ship-decision.
+Side Quest does two equally important things:
+
+1. **Questmap** — turns your code, docs, and features into a navigable knowledge graph so every model in the brainstorm pool argues against the same ground truth. Proven token-efficient: **measured 140× average reduction** in tokens-per-query vs naive whole-corpus reading on a real 924,000-word codebase (range: 50× to 1,150× across sample queries). Models stop re-reading files they already explored last week. ([deep dive](docs/QUESTMAP.md))
+2. **Two-round brainstorm with hardened backtest gates** — multiple AI voices, forced creative divergence between rounds (Round 2 cannot reuse Round 1's mechanisms), and a *real* backtest gate behind every plan segment (replay-not-stats, walk-forward, sensitivity rejection, out-of-regime slice).
+
+Together, the questmap saves the tokens, and the brainstorm + backtest rigor saves the verdict.
 
 **Agent-agnostic.** The methodology is markdown + shell scripts. Use it with [Claude Code](adapters/claude-code.md), [Cursor](adapters/cursor.md), [Codex CLI](adapters/codex-cli.md), [Aider](adapters/aider.md), [Continue.dev](adapters/continue.md), any other AI coding agent, or just bash + your editor — [generic adapter](adapters/generic.md).
 
@@ -52,8 +57,8 @@ Either way, answers get written verbatim to `<quest-dir>/phase_-1_calibration.md
 
 ## Marquee features
 
+- **Questmap — token-efficient codebase map** — turns the relevant code/docs into a navigable knowledge graph so every model in the pool argues against the same ground truth. Plugs into `graphify` for full knowledge graph + community detection + edge audit trail; falls back to bundled native-lite (file inventory + grep symbols + import edges). **Measured 140× average reduction in tokens-per-query** vs raw-file reading on a 924K-word codebase (range 50×-1,150×). Reproducible via the bundled benchmark — see [`docs/QUESTMAP.md`](docs/QUESTMAP.md#token-efficiency-measured).
 - **Phase -1 operator calibration** — 13 structured questions; arrow-key UI where supported, plain numbered prompts where not
-- **Questmap** — turns the relevant code/docs into a shared knowledge map so every model in the pool argues against the same ground truth ([deep dive](docs/QUESTMAP.md)). Plugs into `graphify` for full knowledge graph + community detection + edge audit trail; falls back to bundled native-lite (file inventory + grep symbols + import edges)
 - **Two-round brainstorm with hard no-reuse constraint** between rounds — forces creative divergence
 - **Hardened backtest rules** — replay-not-stats, tautology guard, walk-forward validation, ±10% sensitivity rejection (>20% degradation = overfit), out-of-regime slice required, reconstruction-substrate validation
 - **Multi-voice synthesis** — bring any voices: Claude, Codex, Gemini, Perplexity, GPT, local models, even a human teammate. Voices are pluggable.

@@ -22,7 +22,7 @@ The scaffold creates `<project-root>/data/side_quests/checkout-conversion-platea
 
 ## Step 2: Phase -1 — Operator calibration
 
-The agent reads the scaffold, sees you have `events/sessions/*.jsonl` and `events/conversions.jsonl`, and presents the 13 calibration questions via `AskUserQuestion` in 4 batches.
+The agent reads the scaffold, sees you have `events/sessions/*.jsonl` and `events/conversions.jsonl`, and presents the 13 calibration questions using whatever structured-question mechanism it supports — arrow-key picker on Claude Code/Cursor, numbered prompts on Codex CLI/Aider, etc. (See [`adapters/`](../adapters/) for per-agent specifics.) Either way, 4 batches of 3-4 questions.
 
 Example for Q1 (single-select):
 

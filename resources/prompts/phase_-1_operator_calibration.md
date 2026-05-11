@@ -4,15 +4,35 @@ Ask BEFORE Phase 0. Goal: catch unstated assumptions and ambiguity that would ot
 
 ## How to render the questions
 
-Use the `AskUserQuestion` tool with one phase-block per call. Per-call cap is 4 questions. For 13 questions plan **4 batches**.
+The question shape is the same regardless of agent; the **rendering** depends on what your agent supports. Each question has:
 
-Each question follows this contract:
+- **Option 1** = the **recommended default**, labeled `(Recommended)`. Make this the option you, the agent, would pick if the operator said "use your best judgement."
+- **Options 2–4** = the most-common alternatives appropriate to the project's domain and quest's apparent shape.
+- An `Other` option for free-text custom answers.
+- Single- or multi-select depending on whether the answers compose naturally (Q4, Q6, Q8, Q9, Q10, Q11 are multi; the rest are single).
 
-- **Option 1** is the **recommended default**, labeled `(Recommended)`. Make this the option you, the agent, would pick if the operator said "use your best judgement."
-- **Options 2–4** are the most-common alternatives appropriate to the project's domain and the quest's apparent shape.
-- The tool auto-appends an `Other` option for free-text custom answers.
-- Use `multiSelect: true` for questions where multiple answers compose naturally (Q4, Q6, Q8, Q9, Q10, Q11). Use single-select for the rest.
-- Each `header` field is ≤ 12 characters.
+### Rendering per agent
+
+| Agent | Mechanism | Cap per call |
+|---|---|---|
+| **Claude Code** | `AskUserQuestion` tool with `multiSelect` flag and 12-char `header` field | 4 questions |
+| **Cursor / Continue.dev** | Inline input fields in chat (per the platform's input template) | varies |
+| **Codex CLI / Aider / generic agent** | Numbered Markdown prompt in stdout; operator replies with numbers (e.g. `1` or `2,4`) or `Other: <text>` | unlimited |
+
+For agents without a structured-input mechanism, render each question like this:
+
+```
+Q<n>. <question text> (multi-select OK if applicable — reply with numbers)
+  1. (Recommended) <default>
+  2. <alt 1>
+  3. <alt 2>
+  4. <alt 3>
+  5. Other (type your own)
+
+> <wait for operator reply>
+```
+
+For Claude Code (and any future agent with a structured-question tool), batch into per-call groups of 4 to avoid hitting tool caps. For markdown-prompt agents, you can batch larger if it's not a UX problem.
 
 After the operator answers, **write the responses verbatim** to `<quest-dir>/phase_-1_calibration.md` in the format at the bottom of this file. If they pick `Other`, capture their typed text exactly.
 
@@ -24,7 +44,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: a leading indicator metric (faster signal, less authoritative)
 - Alt 3: a composite metric (operator names the components)
 
-`header: "Metric"` · `multiSelect: false`
+*Selection: single-select.* (Claude Code `header`: `Metric`)
 
 ### Q2. Kill criterion — when do we revert the whole plan?
 - **Recommended default**: primary metric drops > 20% over 14 days post-live.
@@ -32,7 +52,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: looser — > 30% over 30 days
 - Alt 3: no automatic revert; operator-driven only
 
-`header: "Kill bar"` · `multiSelect: false`
+*Selection: single-select.* (Claude Code `header`: `Kill bar`)
 
 ### Q3. Time pressure — ship-now vs learn-first?
 - **Recommended default**: balanced. Ship the high-confidence layers immediately; defer architectural / speculative ideas to follow-up side quests.
@@ -40,7 +60,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: research mode — don't ship anything until backtest agreement is rock solid
 - Alt 3: learn-first with explicit ship trigger (operator names the trigger)
 
-`header: "Time"` · `multiSelect: false`
+*Selection: single-select.* (Claude Code `header`: `Time`)
 
 ### Q4. Existing assumptions to explicitly CHALLENGE
 - **Recommended default**: empty — let Phase 0 surface them.
@@ -48,7 +68,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: "Simpler is better" (or its inverse)
 - Alt 3: "Recent is more relevant" (temporal weighting)
 
-`header: "Challenge"` · `multiSelect: true`
+*Selection: multi-select.* (Claude Code `header`: `Challenge`)
 
 (Operator can add domain-specific assumptions via Other; multi-select allows stacking.)
 
@@ -58,7 +78,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: also skip any external API or third-party integration changes
 - Alt 3: scope is tighter — operator names the read-only zone
 
-`header: "Out of scope"` · `multiSelect: false`
+*Selection: single-select.* (Claude Code `header`: `Out of scope`)
 
 ### Q6. Backtest data sources — what's actually available
 - **Recommended default**: all auto-inventoried files + folders shown in the calibration template.
@@ -66,7 +86,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: also include external data not yet in the project (operator names sources)
 - Alt 3: flag a specific source as known-buggy / partial / unreliable
 
-`header: "Data"` · `multiSelect: true`
+*Selection: multi-select.* (Claude Code `header`: `Data`)
 
 (Multi-select lets the operator both confirm sources AND flag unreliability in the same answer.)
 
@@ -76,7 +96,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: asymmetric — adversarial on Layer X, happy-path on Layer Y (operator names which)
 - Alt 3: chaos — actively try to break the plan with adversarial perturbations during backtest
 
-`header: "Risk"` · `multiSelect: false`
+*Selection: single-select.* (Claude Code `header`: `Risk`)
 
 ### Q8. Multi-model voices — who's in the brainstorm pool?
 - **Recommended default**: Claude + Codex.
@@ -84,7 +104,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: also Perplexity (real-time web research strength)
 - Alt 3: also a domain-expert human voice (operator or teammate writes Phase 0/1 directly)
 
-`header: "Voices"` · `multiSelect: true`
+*Selection: multi-select.* (Claude Code `header`: `Voices`)
 
 ### Q9. Operator-seeded ideas (Phase 1 contributions)
 - **Recommended default**: empty — operator can add at any phase.
@@ -92,7 +112,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: operator wants to be a third Phase 1 voice
 - Alt 3: operator has prior teammates' ideas to bring in
 
-`header: "Seed ideas"` · `multiSelect: true`
+*Selection: multi-select.* (Claude Code `header`: `Seed ideas`)
 
 ### Q10. Prior attempts — what we tried that didn't work
 - **Recommended default**: nothing — clean slate.
@@ -100,7 +120,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: prior attempts succeeded but were rolled back (why?)
 - Alt 3: prior attempts at adjacent problems exist that should be referenced
 
-`header: "Prior"` · `multiSelect: true`
+*Selection: multi-select.* (Claude Code `header`: `Prior`)
 
 ### Q11. Codebase scope — what folders should the agent map for Phase 0 grounding?
 - **Recommended default**: the auto-discovered top-level folders most likely related to the problem area.
@@ -108,7 +128,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: tighter — only the immediate problem-area files
 - Alt 3: skip — pure-research quest with no existing code, OR team has already aligned on the existing-system model
 
-`header: "Codebase"` · `multiSelect: true`
+*Selection: multi-select.* (Claude Code `header`: `Codebase`)
 
 (Multi-select so operator can pick from both auto-discovered list AND add additional paths.)
 
@@ -118,7 +138,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: deliberately test against a regime the plan wasn't tuned for (out-of-distribution stress)
 - Alt 3: the current operating context is anomalous; deprioritize it in tuning
 
-`header: "Regime"` · `multiSelect: false`
+*Selection: single-select.* (Claude Code `header`: `Regime`)
 
 ### Q13. What does "good enough" look like?
 - **Recommended default**: any plan whose Phase 7 / Phase 8 backtests pass with data-tuned defaults at acceptable false-positive rates is good enough to ship in shadow mode.
@@ -126,7 +146,7 @@ After the operator answers, **write the responses verbatim** to `<quest-dir>/pha
 - Alt 2: specific deadline — ship by date or defer to next quest
 - Alt 3: must beat a specific named baseline (not just "the current system")
 
-`header: "Bar"` · `multiSelect: false`
+*Selection: single-select.* (Claude Code `header`: `Bar`)
 
 ## Format for the mission log
 

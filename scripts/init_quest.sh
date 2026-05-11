@@ -109,9 +109,10 @@ SPN
 # Inventory the project — find candidate data sources + code/doc folders.
 # Used to inform the operator about what's available; the agent uses
 # these lists when rendering Phase -1 Q6 (data sources) and Q11 (codebase scope)
-# via AskUserQuestion. The lists are written to the calibration template
-# as a starting point — the agent should still ask Q6 / Q11 interactively
-# and let the operator confirm or override.
+# via whatever structured-question mechanism it has (Claude Code: AskUserQuestion;
+# Cursor/Continue: inline inputs; Codex/Aider/generic: numbered markdown prompt).
+# The lists are written to the calibration template as a starting point — the
+# agent should still ask Q6 / Q11 interactively and let the operator confirm or override.
 
 DATA_INVENTORY_FILE="$(mktemp)"
 FOLDER_INVENTORY_FILE="$(mktemp)"
@@ -139,9 +140,9 @@ find "$PROJECT_ROOT" -maxdepth 2 -type d 2>/dev/null \
   > "$FOLDER_INVENTORY_FILE" || true
 
 # Phase -1 calibration template — pre-populated with the 13 questions.
-# The agent will overwrite this file when it captures live AskUserQuestion
-# answers; this template exists so a quest that's run partially-offline still
-# has structure.
+# The agent overwrites this file when it captures live interactive answers
+# (via the agent's structured-question mechanism); this template exists so a
+# quest that's run partially-offline still has structure.
 {
 cat <<'CAL_HEAD'
 # phase_-1_calibration
@@ -150,11 +151,13 @@ Operator: <name>
 Date: <iso>
 
 > **Phase -1 is REQUIRED before Phase 0.** All 13 questions must be touched.
-> When the agent runs interactively, it asks each question via the
-> AskUserQuestion tool with structured option lists (recommended default as
-> Option 1, common alternatives as Options 2-4, automatic free-text "Other").
-> See `~/.claude/skills/side-quest/resources/prompts/phase_-1_operator_calibration.md`
-> for the canonical option lists.
+> When the agent runs interactively, it asks each question with structured
+> option lists (recommended default as Option 1, common alternatives as
+> Options 2-4, automatic free-text "Other"). The rendering mechanism depends
+> on the agent (Claude Code: AskUserQuestion; Cursor/Continue: inline inputs;
+> Codex/Aider/generic: numbered markdown prompt). See
+> `resources/prompts/phase_-1_operator_calibration.md` for the canonical
+> option lists and `adapters/` for per-agent rendering specifics.
 
 ## Q1. Primary success metric
 [recommended-default | override: <text>]
@@ -244,7 +247,7 @@ echo "  candidate folders auto-inventoried: $(wc -l < "$FOLDER_INVENTORY_FILE" 2
 echo
 echo "next steps:"
 echo "  1. Write MAIN_QUEST.md and PROBLEM.md (or have the agent fill them from chat context)"
-echo "  2. Run Phase -1 calibration interactively via AskUserQuestion (the agent does this)"
+echo "  2. Run Phase -1 calibration interactively (the agent uses its native structured-question mechanism; see adapters/ for specifics)"
 echo "  3. Run questmap to build the shared knowledge map for the chosen scope (Q11):"
 echo "       QUEST_DIR=$QUEST_DIR ~/.claude/skills/side-quest/scripts/questmap.sh <scope-paths>"
 echo "  4. Begin Phase 0 framing (each model references the questmap)"

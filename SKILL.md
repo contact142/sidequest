@@ -7,13 +7,15 @@ description: "Multi-model collaborative problem-solving workflow with hardened b
 
 A structured multi-model brainstorm + backtest + synthesis workflow. Built for problems where one-pass analysis has plateaued and you want forced creative divergence before converging on a plan.
 
+> **Agent-agnostic.** This SKILL.md describes the methodology. The YAML frontmatter above is a Claude Code skill descriptor (used for auto-discovery); the body content works with any AI coding agent that can read markdown, execute shell scripts, and edit files. See [`adapters/`](adapters/) for per-agent integration guides.
+
 ## When To Invoke
 
 Trigger Side Quest when ANY of these are true:
 
-- The user uses the phrase "side quest" or invokes `/sidequest`.
+- The operator uses the phrase "side quest" or invokes their agent's equivalent slash/command trigger.
 - A problem keeps cycling through the same handful of ideas without resolution.
-- The user wants multiple AI perspectives (Claude + Codex + optionally web-UI voices) before committing to an approach.
+- The operator wants multiple AI perspectives (e.g. Claude + Codex + optionally Gemini / Perplexity) before committing to an approach.
 - You have empirical data to backtest hypotheses against.
 - The work serves a clear **overall project goal** ("main quest") that this branch must not lose sight of.
 
@@ -48,16 +50,25 @@ The operator answers a structured questionnaire BEFORE the models start framing 
 
 ### How to ask Phase -1 questions
 
-**Use the `AskUserQuestion` tool, one phase-block at a time.** Render each question with:
+The questions follow a uniform shape, but the **rendering mechanism varies by agent**:
+
+| Agent | Mechanism | Notes |
+|---|---|---|
+| **Claude Code** | `AskUserQuestion` tool | Arrow-key picker. 1-4 questions per call (tool cap). 12-char headers. `multiSelect: true` where compositional. |
+| **Cursor** | Inline `<input>` blocks in chat | Cursor renders as a chat-side form; agent reads the structured response. |
+| **Codex CLI** | Numbered markdown prompt | Agent writes the question + numbered options to stdout, operator replies with numbers (e.g. `1` or `2,4`). |
+| **Aider** | Numbered markdown prompt | Same as Codex CLI — paste-and-reply. |
+| **Continue.dev** | Inline input fields | Same shape as Cursor. |
+| **Generic / unknown** | Numbered markdown prompt | Fallback — works for any LLM or even a human. |
+
+Each question's shape — regardless of rendering — has:
 
 - **Option 1**: the recommended default, labelled `(Recommended)`.
 - **Options 2–4**: the most common alternatives appropriate to the project domain.
-- The tool automatically appends an `Other` option for typed-in custom answers.
-- Set `multiSelect: true` for questions where multiple answers compose naturally (e.g. assumptions to challenge, voices to include, data sources to consume).
+- An `Other` option for typed-in custom answers.
+- Single- or multi-select depending on whether answers compose naturally (multi for: assumptions to challenge, voices to include, data sources to consume, codebase scope).
 
-This gives the operator arrow-key navigation, single- or multi-select, and a free-text path — without the agent needing to construct a custom UI. The tool's structured response feeds straight into `phase_-1_calibration.md`.
-
-**Batching**: send 1–4 related questions per `AskUserQuestion` call (the tool's per-call cap). For 13 questions, that's typically 4 calls of 3-4 questions each. Keep each question's `header` ≤ 12 characters (e.g. `Metric`, `Kill bar`, `Voices`).
+The agent reads the operator's response and writes it verbatim into `<quest-dir>/phase_-1_calibration.md`. That file is the binding context for every downstream phase — overrides cannot be silently ignored.
 
 The questionnaire covers: primary success metric, kill criterion, time pressure, assumptions to challenge, out-of-scope topics, backtest data depth, risk-tolerance posture, multi-model voices, operator-seeded ideas, prior attempts, codebase-scope to ground proposals, regime awareness, and what "good enough" looks like.
 
@@ -192,7 +203,8 @@ See `resources/prompts/phase_10_meta_synthesis.md`.
 # 1. Initialize a new side quest (creates a mission log directory)
 ~/.claude/skills/side-quest/scripts/init_quest.sh "<your-quest-slug>"
 
-# 2. The agent runs Phase -1 calibration via AskUserQuestion (in chat).
+# 2. The agent runs Phase -1 calibration (rendering depends on the agent —
+#    arrow-key picker on Claude Code/Cursor, numbered prompt elsewhere).
 
 # 3. The agent runs questmap to build a knowledge map of the chosen scope:
 QUEST_DIR=<quest-dir> ~/.claude/skills/side-quest/scripts/questmap.sh src/ docs/
@@ -301,4 +313,4 @@ If only one model is available, **flag the gap explicitly in the mission log**. 
 | Hidden Main-Quest contradiction in synthesis | Plan ignores or papers over a Phase 3/6 finding that refutes Phase 0 | Phase 7 must surface refutations of the Main Quest explicitly and propose revise-or-navigate-around. |
 | Lost-in-the-loop synthesis | Phase 7 just reuses one model's plan | Force the synthesis to acknowledge ALL validated ideas, then justify the final structure |
 | Voice unavailable, ignored | Single-model side quest framed as multi-model | Flag the gap explicitly in `phase_*_<model>.md` files |
-| Phase -1 rendered as free-form text | Operator skips it or gives one-word answers | Use `AskUserQuestion` with structured options + recommended default; lowers friction enough that operators engage |
+| Phase -1 rendered as free-form text | Operator skips it or gives one-word answers | Use the agent's structured-question mechanism (Claude Code: `AskUserQuestion`; Cursor/Continue: inline inputs; Codex/Aider/generic: numbered markdown prompt). Lowering friction enough that operators engage. |

@@ -1,0 +1,23 @@
+# Side Quest skill repo
+# Nothing user-generated lives in this directory — the skill scaffolds quests
+# into the consuming project's <project-root>/data/side_quests/ tree, not here.
+# This .gitignore is precautionary.
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+
+# Operator-generated quest scratch (if someone runs init_quest.sh inside this repo)
+.side_quests/
+data/side_quests/
+
+# Backup files
+*.bak
+*.bak.*
+
+# Local archives
+_archive_*

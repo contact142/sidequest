@@ -1,0 +1,50 @@
+# Side Quest Mission Log
+
+**Quest slug:** {{SLUG}}
+**Started:** {{TIMESTAMP}}
+**Operator:** {{OPERATOR}}
+**Models:** {{VOICE_POOL}}
+
+## Main Quest
+{{MAIN_QUEST}}
+
+## Problem
+{{PROBLEM}}
+
+## Available data sources
+{{DATA_SOURCES}}
+
+---
+
+## Phase progress
+
+- [ ] Phase 0 — self-framing (both models)
+- [ ] Phase 1 — oversight brainstorm
+- [ ] Phase 2 — Round 1 decomposition + backtest
+- [ ] Phase 3 — first analysis
+- [ ] Phase 4 — outside-the-box brainstorm (Round 2)
+- [ ] Phase 5 — Round 2 decomposition + backtest
+- [ ] Phase 6 — second analysis
+- [ ] Phase 7 — final synthesis
+
+## Outputs
+
+- `MAIN_QUEST.md`
+- `PROBLEM.md`
+- `phase_0_*.md` (Claude + Codex framing answers)
+- `phase_1_*.md` (oversight brainstorm proposals)
+- `phase_2_*.md` (Round 1 backtest results)
+- `phase_3_analysis.md`
+- `phase_4_*.md` (Round 2 brainstorms with no-reuse constraint)
+- `phase_5_*.md` (Round 2 backtest results)
+- `phase_6_analysis.md`
+- `phase_7_synthesis.md`
+- `PLAN.md` ← the side quest's deliverable
+- `DISCARD.md` ← ideas that didn't make the cut + why
+
+## Append-only log
+
+(Each phase appends a dated entry here. Earlier entries are NEVER rewritten.)
+
+---
+{{TIMESTAMP}} — quest initialized

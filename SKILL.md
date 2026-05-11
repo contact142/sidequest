@@ -75,17 +75,26 @@ Both models answer **in writing, separately**, before either sees the other's an
 
 Phase 0 outputs go into the mission log as `phase_0_<model>.md` (e.g. `phase_0_claude.md`, `phase_0_codex.md`).
 
-### Codebase-awareness sub-step (recommended before Phase 0)
+### Questmap sub-step (recommended before Phase 0)
 
-When the side quest will touch existing code, generate a structured map of the relevant code, docs, and features BEFORE Phase 0. This gives every model a shared ground truth so proposals reference real functions / files / config keys, not hand-waved sketches.
+**Questmap** is Side Quest's grounding feature: turn the relevant code, docs, and features into a navigable knowledge map BEFORE Phase 0. This gives every model in the brainstorm pool a shared ground-truth view of what already exists, so proposals reference real functions / files / config keys / data shapes, not hand-waved sketches.
 
-**How**: have the agent inventory the problem-area scope chosen in Phase -1 Q11. Output a single markdown file (`<quest-dir>/codebase_map.md`) with: top-level files, key functions per file, public interfaces, configuration entry points, data shapes, and known cross-file dependencies. The agent can use grep/AST tools to do this; it doesn't need a separate "graph" infrastructure.
+**How**: have the agent run `scripts/questmap.sh <scope-path>` against the directories the operator chose in Phase -1 Q11. The script auto-detects an available backend:
 
-**Why it matters**: in early Side Quest runs, Phase 1 plans proposed mechanisms that already partly existed in the codebase or that conflicted with existing structure. Each model had a different mental model of what the system WAS. A shared codebase map makes Phase 0 / Phase 1 / Phase 4 work against common ground truth.
+| Backend | When used | Output |
+|---|---|---|
+| **graphify** (preferred, optional) | When `graphify` is on `$PATH` | Full knowledge graph with community detection, edge audit trail (EXTRACTED / INFERRED / AMBIGUOUS), persistent across sessions, queryable via `graphify query "<question>"`, multimodal (handles code + docs + papers + images). Produces `graph.json`, `index.md`, and `MAP.md`. |
+| **native-lite** (bundled fallback) | When no external backend is installed | File-type histogram, top-level symbols per file (functions/classes/exports via grep), cross-file import edges (sampled), configuration entry points. Single `MAP.md`. Zero external dependencies. |
+
+Output lives at `<quest-dir>/questmap/MAP.md` (always) plus `graph.json` / `index.md` when the backend supports them. Force a specific backend with `QUESTMAP_BACKEND=graphify|native-lite`.
+
+**Why it matters**: in early Side Quest runs, Phase 1 plans proposed mechanisms that already partly existed in the codebase or that conflicted with existing structure. Each model had a different mental model of what the system WAS. A shared questmap makes Phase 0 / Phase 1 / Phase 4 work against common ground truth.
 
 **When to skip**: if the problem area is small (single file, no dependencies), or if the operator confirms in Phase -1 Q11 that the team has already aligned on the existing-system model. For pure-research quests with no existing code (e.g., a green-field design), skip entirely.
 
-**Hard rule when used**: every Phase 1 / Phase 4 plan must reference specific entries from the codebase map (files / functions / features) where applicable. "We add a new gate at the entry path" is too vague when the map shows the entry path has 4 distinct stages already.
+**Hard rule when used**: every Phase 1 / Phase 4 plan must reference specific entries from the questmap (files / functions / features) where applicable. "We add a new gate at the entry path" is too vague when the map shows the entry path has 4 distinct stages already.
+
+**Optional graphify backend**: if you want the richer feature set, install any tool that can read/write the same `graphify-out/` convention (knowledge graph JSON + community detection + per-cluster summaries). Side Quest is backend-agnostic — it only depends on the standardized output shape under `<quest-dir>/questmap/`.
 
 ## Phase 1 — Oversight brainstorm
 
@@ -184,7 +193,10 @@ See `resources/prompts/phase_10_meta_synthesis.md`.
 ~/.claude/skills/side-quest/scripts/init_quest.sh "<your-quest-slug>"
 
 # 2. The agent runs Phase -1 calibration via AskUserQuestion (in chat).
-# 3. The agent generates a codebase map for the problem-area scope (recommended).
+
+# 3. The agent runs questmap to build a knowledge map of the chosen scope:
+QUEST_DIR=<quest-dir> ~/.claude/skills/side-quest/scripts/questmap.sh src/ docs/
+
 # 4. The agent runs Phase 0 framing for itself; Codex via consult helper:
 ~/.claude/skills/side-quest/scripts/codex_consult.sh phase_0_prompt.md phase_0_codex.md
 
@@ -201,7 +213,10 @@ Each side quest creates a directory under the active project. The default locati
 ├── MAIN_QUEST.md            # the overall project goal (copied at quest start)
 ├── PROBLEM.md               # the immediate problem being side-quested
 ├── phase_-1_calibration.md  # operator answers to the 13-question calibration
-├── codebase_map.md          # (optional) shared ground-truth map of relevant code
+├── questmap/                # (optional) shared knowledge map for Phase 0 grounding
+│   ├── MAP.md               #   human-readable summary (always produced)
+│   ├── graph.json           #   machine-readable nodes+edges (graphify backend only)
+│   └── index.md             #   per-cluster summaries (graphify backend only)
 ├── phase_0_<model>.md       # framing per model
 ├── phase_1_<model>.md       # oversight brainstorm
 ├── phase_2_<model>.md       # decomposition + segment results
@@ -246,12 +261,14 @@ If only one model is available, **flag the gap explicitly in the mission log**. 
 - `SKILL.md` — this file (the methodology)
 - `README.md` — open-source project description, install, contributing
 - `scripts/init_quest.sh` — scaffold a mission log directory
+- `scripts/questmap.sh` — build a knowledge map of a scope (Phase 0 grounding); auto-detects graphify or falls back to native-lite
 - `scripts/codex_consult.sh` — invoke Codex with the right flags
 - `scripts/gemini_consult.sh` — Gemini consult stub
 - `scripts/perplexity_consult.sh` — Perplexity consult stub
 - `resources/prompts/` — reusable prompt templates per phase
 - `resources/templates/mission_log.md.template` — blank mission log skeleton
 - `docs/EXAMPLE.md` — a worked example illustrating phases end-to-end
+- `docs/QUESTMAP.md` — questmap feature deep dive, backend integration guide
 
 ## Self-review checklist (run before declaring the quest done)
 

@@ -6,6 +6,16 @@ When single-pass thinking has plateaued on a hard problem and you have data to t
 
 It works for **any domain** where replayable data exists — software architecture, ML deployment decisions, infra/SRE, research design, product strategy, trading systems, anywhere a verdict needs more rigor than "this seemed reasonable."
 
+## Marquee features
+
+- **Phase -1 operator calibration** with arrow-key option selection (13 structured questions, multi-select where appropriate, free-text fallback)
+- **Questmap** — turns the relevant code, docs, and features into a shared knowledge map so every model in the brainstorm pool argues against the same ground truth ([deep dive](docs/QUESTMAP.md))
+- **Two-round brainstorm with hard no-reuse constraint** between rounds
+- **Hardened backtest rules** — replay-not-stats, tautology guard, walk-forward validation, ±10% sensitivity rejection, out-of-regime slice required, reconstruction-substrate validation
+- **Multi-voice synthesis** — Claude + Codex + optional Gemini / Perplexity via web-UI prompt pattern
+- **Quest tree** — parent / child / sibling relationships with no-reuse propagation; cross-family meta-synthesis (Phase 10)
+- **Per-quest verdict types** — PASS / WEAKLY_PASS / DROP / FRAMEWORK_RESERVED, with audit trail for reversals
+
 ---
 
 ## Why this skill exists
@@ -33,7 +43,7 @@ Side Quest fixes all three:
 ```
 Phase -1: Operator calibration  (13 structured questions, agent uses AskUserQuestion)
    ↓
-Phase 0:  Codebase map (if applicable) + each model's independent self-framing
+Phase 0:  Questmap (if applicable — shared knowledge map) + each model's independent self-framing
    ↓
 Phase 1:  Each voice proposes a plan + success criteria (Round 1)
    ↓
@@ -66,7 +76,10 @@ Every quest creates an append-only directory:
 ├── MAIN_QUEST.md            # the overall project goal — never overwrite
 ├── PROBLEM.md               # what triggered this quest
 ├── phase_-1_calibration.md  # operator's answers to the 13 calibration questions
-├── codebase_map.md          # (optional) shared ground-truth code map
+├── questmap/                # (optional) shared knowledge map for Phase 0 grounding
+│   ├── MAP.md
+│   ├── graph.json           # (graphify backend only)
+│   └── index.md             # (graphify backend only)
 ├── phase_0_<model>.md       # per-model self-framing
 ├── phase_1_<model>.md       # Round 1 plans
 ├── phase_2_<model>.md       # decomposition + backtest results
@@ -130,6 +143,7 @@ Side Quest is a Claude Code skill. To install it:
 
    - **Codex CLI** (`codex`) — for the second model voice. The skill works without Codex but flags the gap. Get it from [openai/codex](https://github.com/openai/codex).
    - **Gemini CLI / Perplexity CLI** — supported via stub wrappers, but most users invoke those models through their web UIs.
+   - **graphify (or compatible knowledge-graph tool)** — upgrades questmap from native-lite (bundled fallback: file inventory + grep-extracted symbols) to a full knowledge graph with community detection, edge audit trail, and persistent cross-session storage. See [`docs/QUESTMAP.md`](docs/QUESTMAP.md) for setup.
 
 4. Verify discovery: in Claude Code, type `/sidequest` or any prompt containing "side quest". The skill should be invoked.
 
@@ -146,9 +160,11 @@ Side Quest is a Claude Code skill. To install it:
 #    For each of 13 questions: Option 1 is the recommended default,
 #    Options 2-4 are the most-common alternatives, you can also type Other.
 
-# 3. The agent generates a codebase_map.md for the chosen scope.
+# 3. The agent runs questmap to build a shared knowledge map of the chosen scope:
+#    QUEST_DIR=<quest-dir> ~/.claude/skills/side-quest/scripts/questmap.sh src/ docs/
+#    Uses graphify if installed; falls back to bundled native-lite backend.
 
-# 4. Phase 0 framing happens for each voice in the pool.
+# 4. Phase 0 framing happens for each voice in the pool, referencing the questmap.
 
 # 5. The agent walks you through Phases 1-7 iteratively, writing each
 #    phase's outputs to the mission log as it goes.
@@ -234,6 +250,7 @@ side-quest/
 ├── SKILL.md                  ← the methodology, hard rules, phase definitions
 ├── scripts/
 │   ├── init_quest.sh         ← scaffold a mission log
+│   ├── questmap.sh           ← build a knowledge map for Phase 0 grounding (graphify or native-lite)
 │   ├── codex_consult.sh      ← invoke Codex CLI
 │   ├── gemini_consult.sh     ← Gemini stub
 │   └── perplexity_consult.sh ← Perplexity stub
@@ -253,7 +270,8 @@ side-quest/
 │   └── templates/
 │       └── mission_log.md.template
 └── docs/
-    └── EXAMPLE.md            ← worked end-to-end example (generic web-app domain)
+    ├── EXAMPLE.md            ← worked end-to-end example (generic web-app domain)
+    └── QUESTMAP.md           ← questmap feature deep dive + backend integration
 ```
 
 ---

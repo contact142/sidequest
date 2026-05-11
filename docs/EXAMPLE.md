@@ -51,17 +51,18 @@ You arrow through, hit `Recommended` for most, multi-select Q4 to challenge "sim
 
 The agent writes your answers verbatim to `phase_-1_calibration.md`.
 
-## Step 3: Codebase map
+## Step 3: Questmap
 
-Per Phase -1 Q11, the agent scans `src/checkout/`, `src/auth/`, `src/onboarding/` and writes `codebase_map.md` with:
+Per Phase -1 Q11, the agent runs `scripts/questmap.sh src/checkout/ src/auth/ src/onboarding/` and writes `questmap/MAP.md` (plus `graph.json` and `index.md` if the `graphify` backend is available) with:
 
 - File-to-responsibility mapping
 - Public functions per file
-- Cross-file dependencies
+- Cross-file import edges (sampled or full graph depending on backend)
 - Configuration entry points
 - Existing experiment hooks (if you have an A/B framework)
+- With `graphify` backend: edge audit trail (EXTRACTED / INFERRED / AMBIGUOUS), community detection, queryable interface
 
-This becomes shared ground truth for both Claude and Codex's Phase 0/1/4 work.
+This becomes shared ground truth for both Claude and Codex's Phase 0/1/4 work. Plans that say "we add a gate at the entry path" without citing specific files from the questmap get rejected in Phase 7.
 
 ## Step 4: Phase 0 — Self-framing
 

@@ -80,7 +80,6 @@ EOF
 # we ship the placeholder pair claude/codex but the skill supports any voice.
 for f in \
   phase_-1_calibration.md \
-  codebase_map.md \
   phase_0_claude.md phase_0_codex.md \
   phase_1_claude.md phase_1_codex.md \
   phase_2_claude.md phase_2_codex.md \
@@ -246,5 +245,6 @@ echo
 echo "next steps:"
 echo "  1. Write MAIN_QUEST.md and PROBLEM.md (or have the agent fill them from chat context)"
 echo "  2. Run Phase -1 calibration interactively via AskUserQuestion (the agent does this)"
-echo "  3. Generate codebase_map.md for the chosen scope (Q11), unless skipped"
-echo "  4. Begin Phase 0 framing"
+echo "  3. Run questmap to build the shared knowledge map for the chosen scope (Q11):"
+echo "       QUEST_DIR=$QUEST_DIR ~/.claude/skills/side-quest/scripts/questmap.sh <scope-paths>"
+echo "  4. Begin Phase 0 framing (each model references the questmap)"
